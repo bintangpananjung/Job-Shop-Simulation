@@ -15,9 +15,9 @@
 
 /* Declare non-simlib global variables. */
 
-int num_stations, num_job_types, i, j, num_machines[MAX_NUM_STATIONS + 1],
+int num_stations, num_job_types, i, j, num_machines[MAX_NUM_STATIONS * 3 + 1],
     num_tasks[MAX_NUM_JOB_TYPES + 1], job_shop_idx,
-    route[MAX_NUM_JOB_TYPES + 1][MAX_NUM_STATIONS + 1], num_machines_busy[MAX_NUM_STATIONS + 1], job_type, task;
+    route[MAX_NUM_JOB_TYPES + 1][MAX_NUM_STATIONS + 1], num_machines_busy[MAX_NUM_STATIONS * 3 + 1], job_type, task;
 double mean_interarrival, length_simulation, prob_distrib_job_type[26],
     mean_service[MAX_NUM_JOB_TYPES + 1][MAX_NUM_STATIONS + 1];
 FILE *infile, *outfile;
@@ -43,7 +43,7 @@ void arrive(int new_job, int job_shop) /* Function to serve as both an arrival e
 
   /* Determine the station from the route matrix. */
 
-  station = route[job_type][task];
+  station = route[job_type][task] + (job_shop - 1) * num_stations;
 
   /* Check to see whether all machines in this station are busy. */
   if (num_machines_busy[station] == num_machines[station])
@@ -60,7 +60,7 @@ void arrive(int new_job, int job_shop) /* Function to serve as both an arrival e
     transfer[2] = job_type;
     transfer[3] = task;
 
-    list_file(LAST, station + (job_shop - 1) * num_stations);
+    list_file(LAST, station);
     // printf("%d\n", job_shop);
   }
 
@@ -70,10 +70,10 @@ void arrive(int new_job, int job_shop) /* Function to serve as both an arrival e
     /* A machine in this station is idle, so start service on the arriving
        job (which has a delay of zero). */
 
-    sampst(0.0, station + (job_shop - 1) * num_stations);                 /* For station. */
+    sampst(0.0, station);                                                 /* For station. */
     sampst(0.0, num_stations + job_type + (job_shop - 1) * num_stations); /* For job type. */
     ++num_machines_busy[station];
-    timest((double)num_machines_busy[station], station + (job_shop - 1) * num_stations);
+    timest((double)num_machines_busy[station], station);
 
     /* Schedule a service completion.  Note defining attributes beyond the
        first two for the event record before invoking event_schedule. */
@@ -95,19 +95,19 @@ void depart(int job_shop) /* Event function for departure of a job from a partic
 
   job_type = transfer[3];
   task = transfer[4];
-  station = route[job_type][task];
+  station = route[job_type][task] + (job_shop - 1) * num_stations;
   // printf("%d\n", job_shop);
 
   /* Check to see whether the queue for this station is empty. */
 
-  if (list_size[station + (job_shop - 1) * num_stations] == 0)
+  if (list_size[station] == 0)
   {
 
     /* The queue for this station is empty, so make a machine in this
        station idle. */
 
     --num_machines_busy[station];
-    timest((double)num_machines_busy[station], station + (job_shop - 1) * num_stations);
+    timest((double)num_machines_busy[station], station);
     // printf("%d\n", job_shop);
   }
 
@@ -116,11 +116,11 @@ void depart(int job_shop) /* Event function for departure of a job from a partic
 
     /* The queue is nonempty, so start service on first job in queue. */
     // printf("%d\n", job_shop);
-    list_remove(FIRST, station + (job_shop - 1) * num_stations);
+    list_remove(FIRST, station);
 
     /* Tally this delay for this station. */
 
-    sampst(sim_time - transfer[1], station + (job_shop - 1) * num_stations);
+    sampst(sim_time - transfer[1], station);
 
     /* Tally this same delay for this job type. */
 
@@ -186,7 +186,7 @@ void report(void) /* Report generator function. */
     fprintf(outfile, "\nstation       in queue       utilization        in queue");
     for (j = 1; j <= num_stations; ++j)
     {
-      fprintf(outfile, "\n\n%4d%17.3f%17.3f%17.3f", j, filest(j + (k)*num_stations), timest(0.0, -(j + (k)*num_stations)) / num_machines[j], sampst(0.0, -(j + (k)*num_stations)));
+      fprintf(outfile, "\n\n%4d%17.3f%17.3f%17.3f", j, filest(j + (k)*num_stations), timest(0.0, -(j + (k)*num_stations)) / num_machines[j + k * num_stations], sampst(0.0, -(j + (k)*num_stations)));
     }
   }
 }
@@ -250,8 +250,24 @@ int main() /* Main function. */
 
   /* Initialize all machines in all stations to the idle state. */
 
-  for (j = 1; j <= num_stations; ++j)
+  for (j = 1; j <= num_stations * 3; ++j)
     num_machines_busy[j] = 0;
+
+  for (j = num_stations + 1; j <= num_stations * 3; j++)
+  {
+    if (j % num_stations == 0)
+    {
+      num_machines[j] = num_machines[5];
+    }
+    else
+    {
+      num_machines[j] = num_machines[j % num_stations];
+    }
+  }
+  for (j = 1; j <= num_stations * 3; j++)
+  {
+    printf("%d\n", num_machines[j]);
+  }
 
   /* Initialize simlib */
 
