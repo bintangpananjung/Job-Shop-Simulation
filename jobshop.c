@@ -41,12 +41,16 @@ void arrive(int new_job, int job_shop) /* Function to serve as both an arrival e
     task = 1;
   }
 
-  /* Determine the station from the route matrix. */
+  int offset;
 
-  station = route[job_type][task] + (job_shop - 1) * num_stations;
+  offset = (job_shop - 1) * (num_stations + 3);
+
+  /* Determine the station from the route matrix. */
+  station = route[job_type][task] + offset;
+  int station_machine = route[job_type][task] + (job_shop - 1) * num_stations;
 
   /* Check to see whether all machines in this station are busy. */
-  if (num_machines_busy[station] == num_machines[station])
+  if (num_machines_busy[station_machine] == num_machines[station_machine])
   {
 
     /* All machines in this station are busy, so place the arriving job at
@@ -70,10 +74,10 @@ void arrive(int new_job, int job_shop) /* Function to serve as both an arrival e
     /* A machine in this station is idle, so start service on the arriving
        job (which has a delay of zero). */
 
-    sampst(0.0, station);                                                 /* For station. */
-    sampst(0.0, num_stations + job_type + (job_shop - 1) * num_stations); /* For job type. */
-    ++num_machines_busy[station];
-    timest((double)num_machines_busy[station], station);
+    sampst(0.0, station);                          /* For station. */
+    sampst(0.0, num_stations + job_type + offset); /* For job type. */
+    ++num_machines_busy[station_machine];
+    timest((double)num_machines_busy[station_machine], station);
 
     /* Schedule a service completion.  Note defining attributes beyond the
        first two for the event record before invoking event_schedule. */
@@ -93,9 +97,12 @@ void depart(int job_shop) /* Event function for departure of a job from a partic
 
   /* Determine the station from which the job is departing. */
 
+  int offset = (job_shop - 1) * (num_stations + 3);
+
   job_type = transfer[3];
   task = transfer[4];
-  station = route[job_type][task] + (job_shop - 1) * num_stations;
+  station = route[job_type][task] + offset;
+  int station_machine = route[job_type][task] + (job_shop - 1) * num_stations;
   // printf("%d\n", job_shop);
 
   /* Check to see whether the queue for this station is empty. */
@@ -106,8 +113,8 @@ void depart(int job_shop) /* Event function for departure of a job from a partic
     /* The queue for this station is empty, so make a machine in this
        station idle. */
 
-    --num_machines_busy[station];
-    timest((double)num_machines_busy[station], station);
+    --num_machines_busy[station_machine];
+    timest((double)num_machines_busy[station_machine], station);
     // printf("%d\n", job_shop);
   }
 
@@ -126,7 +133,7 @@ void depart(int job_shop) /* Event function for departure of a job from a partic
 
     job_type_queue = transfer[2];
     task_queue = transfer[3];
-    sampst(sim_time - transfer[1], num_stations + job_type_queue + (job_shop - 1) * num_stations);
+    sampst(sim_time - transfer[1], num_stations + job_type_queue + offset);
 
     /* Schedule end of service for this job at this station.  Note defining
        attributes beyond the first two for the event record before invoking
@@ -149,6 +156,7 @@ void depart(int job_shop) /* Event function for departure of a job from a partic
   }
   else
   {
+    // printf("%d", job_shop);
     if (job_shop < 3)
     {
       job_shop_idx = 3;
@@ -161,18 +169,20 @@ void report(void) /* Report generator function. */
 {
   int i;
   double overall_avg_job_tot_delay, avg_job_tot_delay, sum_probs;
+  int offset;
 
   /* Compute the average total delay in queue for each job type and the
      overall average job total delay. */
   for (int k = 0; k < 3; ++k)
   {
+    offset = k * (num_stations + 3);
     fprintf(outfile, "\n\n\n\nJOB SHOP : %d", k + 1);
     fprintf(outfile, "\n\nJob type     Average total delay in queue");
     overall_avg_job_tot_delay = 0.0;
     sum_probs = 0.0;
     for (i = 1; i <= num_job_types; ++i)
     {
-      avg_job_tot_delay = sampst(0.0, -(num_stations + i + (k)*num_stations)) * num_tasks[i];
+      avg_job_tot_delay = sampst(0.0, -(num_stations + i + offset)) * num_tasks[i];
       fprintf(outfile, "\n\n%4d%27.3f", i, avg_job_tot_delay);
       overall_avg_job_tot_delay += (prob_distrib_job_type[i] - sum_probs) * avg_job_tot_delay;
       sum_probs = prob_distrib_job_type[i];
@@ -186,7 +196,8 @@ void report(void) /* Report generator function. */
     fprintf(outfile, "\nstation       in queue       utilization        in queue");
     for (j = 1; j <= num_stations; ++j)
     {
-      fprintf(outfile, "\n\n%4d%17.3f%17.3f%17.3f", j, filest(j + (k)*num_stations), timest(0.0, -(j + (k)*num_stations)) / num_machines[j + k * num_stations], sampst(0.0, -(j + (k)*num_stations)));
+      // printf("%f\n", timest(0.0, -(j + offset)));
+      fprintf(outfile, "\n\n%4d%17.3f%17.3f%17.3f", j, filest(j + offset), timest(0.0, -(j + offset)) / num_machines[j + k * num_stations], sampst(0.0, -(j + offset)));
     }
   }
 }
@@ -264,10 +275,10 @@ int main() /* Main function. */
       num_machines[j] = num_machines[j % num_stations];
     }
   }
-  for (j = 1; j <= num_stations * 3; j++)
-  {
-    printf("%d\n", num_machines[j]);
-  }
+  // for (j = 1; j <= num_stations * 3; j++)
+  // {
+  //   printf("%d\n", num_machines[j]);
+  // }
 
   /* Initialize simlib */
 
@@ -288,6 +299,7 @@ int main() /* Main function. */
 
   /* Run the simulation until it terminates after an end-simulation event
      (type EVENT_END_SIMULATION) occurs. */
+  job_shop_idx = 0;
   do
   {
 
@@ -300,9 +312,19 @@ int main() /* Main function. */
     switch (next_event_type)
     {
     case EVENT_ARRIVAL:
-      job_shop_idx = (rand() % 2) + 1;
-      // printf("%d\n", job_shop_idx);
+      // printf("%d", job_shop_idx);
+      if (job_shop_idx == 0 || job_shop_idx == 2 || job_shop_idx == 3)
+      {
+        job_shop_idx = 1;
+      }
+      else if (job_shop_idx == 1)
+      {
+        job_shop_idx = 2;
+      }
+
+      // job_shop_idx = (rand() % 2) + 1;
       arrive(1, job_shop_idx);
+
       // arrive(1, 2);
       break;
     case EVENT_DEPARTURE:

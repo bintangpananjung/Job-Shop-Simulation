@@ -38,28 +38,28 @@ JOB SHOP : 1
 
 Job type     Average total delay in queue
 
-   1                   4339.619
+   1                   4739.124
 
-   2                   3828.323
+   2                   3770.472
 
-   3                   6463.805
+   3                   3700.877
 
-Overall average job total delay =  4508.808
+Overall average job total delay =  4047.149
 
 
 
  Work      Average number      Average       Average delay
 station       in queue       utilization        in queue
 
-   1        14065.522            0.999          867.117
+   1        16693.308            1.000          908.160
 
-   2       375184.054            0.999         1374.494
+   2       514162.192            0.999         1387.916
 
-   3       543116.612            0.997         1304.947
+   3       751486.076            0.998         1302.548
 
-   4       925323.892            1.000         1393.524
+   4      1272646.085            0.999         1398.216
 
-   5         2681.424            1.000          968.578
+   5            2.782           -0.195            1.071
 
 
 
@@ -67,28 +67,28 @@ JOB SHOP : 2
 
 Job type     Average total delay in queue
 
-   1                   4701.248
+   1                   4734.711
 
-   2                   3710.615
+   2                   3764.697
 
-   3                   6183.581
+   3                   3723.777
 
-Overall average job total delay =  4502.398
+Overall average job total delay =  4047.517
 
 
 
  Work      Average number      Average       Average delay
 station       in queue       utilization        in queue
 
-   1        13915.204            0.998         1084.905
+   1        16462.252            0.998          899.978
 
-   2       375917.819            0.999         1276.108
+   2       513603.771            1.000         1370.846
 
-   3       543004.157            1.000         1292.761
+   3       751100.725            0.999         1305.370
 
-   4       925086.963            0.999         1403.296
+   4      1273162.803            0.999         1397.221
 
-   5         2693.940            0.994          978.723
+   5           54.140            0.879           20.673
 
 
 
@@ -96,25 +96,25 @@ JOB SHOP : 3
 
 Job type     Average total delay in queue
 
-   1                   1495.699
+   1                   1498.332
 
-   2                    403.484
+   2                    953.890
 
-   3                    783.060
+   3                   1292.872
 
-Overall average job total delay =   807.064
+Overall average job total delay =  1185.019
 
 
 
  Work      Average number      Average       Average delay
 station       in queue       utilization        in queue
 
-   1           14.295            0.998         1175.312
+   1            5.494            0.995          161.265
 
-   2          154.147            0.998         1236.872
+   2          236.819            0.998          395.336
 
-   3          234.260            0.998         1236.716
+   3          342.769            0.998          462.234
 
-   4          392.767            0.999           50.310
+   4          552.098            0.999          482.588
 
-   5            0.000           -1.585            0.000
+   5            0.187            0.692            0.000
